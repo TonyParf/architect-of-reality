@@ -1,0 +1,521 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>ANTHOSPHERE — OS of Civilization v4</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Rajdhani:wght@300;500;700&display=swap');
+  *{margin:0;padding:0;box-sizing:border-box;}
+  body{background:#000510;overflow:hidden;font-family:'Share Tech Mono',monospace;color:#00d4ff;cursor:crosshair;}
+  canvas{display:block;}
+  body::before{content:'';position:fixed;inset:0;pointer-events:none;z-index:5;
+    background:repeating-linear-gradient(0deg,transparent,transparent 3px,rgba(0,212,255,0.01) 3px,rgba(0,212,255,0.01) 4px);}
+
+  .c{position:fixed;width:32px;height:32px;z-index:20;}
+  .c.tl{top:12px;left:12px;border-top:1px solid #00d4ff;border-left:1px solid #00d4ff;}
+  .c.tr{top:12px;right:12px;border-top:1px solid #00d4ff;border-right:1px solid #00d4ff;}
+  .c.bl{bottom:12px;left:12px;border-bottom:1px solid #00d4ff;border-left:1px solid #00d4ff;}
+  .c.br{bottom:12px;right:12px;border-bottom:1px solid #00d4ff;border-right:1px solid #00d4ff;}
+
+  #hdr{position:fixed;top:18px;left:50%;transform:translateX(-50%);z-index:20;text-align:center;pointer-events:none;}
+  #hdr .sub{font-family:'Rajdhani',sans-serif;font-size:9px;letter-spacing:6px;color:rgba(0,212,255,0.4);}
+  #hdr .ttl{font-family:'Rajdhani',sans-serif;font-size:19px;font-weight:700;letter-spacing:5px;color:#00d4ff;text-shadow:0 0 25px rgba(0,212,255,0.9);}
+  #hdr .desc{font-size:8px;color:rgba(0,212,255,0.3);letter-spacing:2px;margin-top:2px;}
+
+  /* INFO PANEL */
+  #panel{position:fixed;right:12px;top:50%;transform:translateY(-50%);width:clamp(190px,26vw,270px);z-index:20;
+    background:rgba(0,5,15,0.94);border:1px solid rgba(0,212,255,0.2);padding:14px;
+    opacity:0;transition:opacity .3s;pointer-events:none;}
+  #panel.on{opacity:1;}
+  #panel .lbl{font-size:7px;letter-spacing:3px;color:rgba(0,212,255,0.35);margin-bottom:4px;}
+  #panel .nm{font-family:'Rajdhani',sans-serif;font-size:16px;font-weight:700;color:#fff;line-height:1.2;}
+  #panel .role{font-size:9px;margin:3px 0 6px;}
+  #panel .sys{font-size:9px;border-left:2px solid;padding-left:6px;margin:3px 0;}
+  #panel .desc{font-size:9px;line-height:1.6;color:rgba(255,255,255,0.5);margin:6px 0;}
+  #panel .div{height:1px;background:rgba(0,212,255,0.1);margin:7px 0;}
+  #panel .th{font-size:8px;color:rgba(255,200,0,0.6);font-style:italic;}
+
+  /* PROTOTYPE PANEL */
+  #proto{position:fixed;left:50%;bottom:0;transform:translateX(-50%);width:min(600px,96vw);z-index:30;
+    background:rgba(0,5,15,0.97);border:1px solid rgba(255,102,0,0.4);border-bottom:none;
+    padding:16px 20px;transition:transform .4s ease;transform:translateX(-50%) translateY(100%);}
+  #proto.open{transform:translateX(-50%) translateY(0);}
+  #proto h3{font-family:'Rajdhani',sans-serif;font-size:14px;font-weight:700;letter-spacing:3px;
+    color:#ff6600;margin-bottom:10px;}
+  #proto .row{display:flex;gap:8px;margin-bottom:8px;align-items:center;}
+  #proto label{font-size:9px;color:rgba(0,212,255,0.5);width:90px;flex-shrink:0;letter-spacing:1px;}
+  #proto input,#proto textarea{flex:1;background:rgba(0,20,40,0.8);border:1px solid rgba(0,212,255,0.2);
+    color:#00d4ff;font-family:'Share Tech Mono',monospace;font-size:10px;padding:5px 8px;outline:none;}
+  #proto textarea{height:50px;resize:none;}
+  #proto .btns{display:flex;gap:8px;margin-top:8px;}
+  #proto button{font-family:'Share Tech Mono',monospace;font-size:10px;letter-spacing:2px;padding:7px 14px;
+    border:1px solid;cursor:pointer;text-transform:uppercase;}
+  #proto .run{border-color:#ff6600;color:#ff6600;background:rgba(255,102,0,0.1);}
+  #proto .run:hover{background:rgba(255,102,0,0.2);}
+  #proto .cls{border-color:rgba(0,212,255,0.3);color:rgba(0,212,255,0.4);background:transparent;}
+  #proto-result{margin-top:10px;font-size:9px;line-height:1.8;display:none;}
+  #proto-result .ok{color:#00ff44;}
+  #proto-result .warn{color:#ffd700;}
+  #proto-result .fail{color:#ff4444;}
+  #proto-btn{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);z-index:25;
+    font-family:'Share Tech Mono',monospace;font-size:9px;letter-spacing:3px;padding:7px 18px;
+    border:1px solid rgba(255,102,0,0.5);color:#ff6600;background:rgba(255,102,0,0.08);
+    cursor:pointer;text-transform:uppercase;}
+  #proto-btn:hover{background:rgba(255,102,0,0.18);}
+
+  /* LEGEND */
+  #leg{position:fixed;left:12px;bottom:56px;z-index:20;font-size:8px;line-height:2.4;}
+  .li{display:flex;align-items:center;gap:6px;}
+  .ld{width:7px;height:7px;border-radius:50%;}
+
+  /* STATS */
+  #stats{position:fixed;left:12px;top:50%;transform:translateY(-50%);z-index:20;font-size:8px;line-height:2.5;color:rgba(0,212,255,0.28);}
+  #stats span{color:rgba(0,212,255,0.7);}
+
+  /* ORBIT LABELS */
+  .orbit-lbl{position:fixed;font-size:7px;letter-spacing:2px;color:rgba(0,212,255,0.2);pointer-events:none;z-index:15;text-transform:uppercase;}
+
+  /* BOOT */
+  #boot{position:fixed;inset:0;background:#000510;z-index:100;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;transition:opacity 1s;}
+  #boot.gone{opacity:0;pointer-events:none;}
+  #btxt{font-family:'Rajdhani',sans-serif;font-size:24px;font-weight:700;letter-spacing:8px;color:#00d4ff;text-shadow:0 0 40px #00d4ff;}
+  #bsub{font-size:9px;letter-spacing:3px;color:rgba(0,212,255,0.35);}
+  #bbar{width:180px;height:1px;background:rgba(0,212,255,0.1);}
+  #bprog{height:100%;background:#00d4ff;width:0;transition:width 1.8s ease;box-shadow:0 0 8px #00d4ff;}
+  #bseq{font-size:8px;letter-spacing:1px;color:rgba(0,212,255,0.3);height:14px;}
+</style>
+</head>
+<body>
+<div id="boot">
+  <div id="btxt">ANTHOSPHERE</div>
+  <div id="bsub">CIVILIZATIONAL OS · INITIALIZING</div>
+  <div id="bbar"><div id="bprog"></div></div>
+  <div id="bseq"></div>
+</div>
+
+<div class="c tl"></div><div class="c tr"></div><div class="c bl"></div><div class="c br"></div>
+
+<div id="hdr">
+  <div class="sub">Operational Model of Civilization · v4.0</div>
+  <div class="ttl">ANTHOSPHERE</div>
+  <div class="desc">tap node to inspect · drag to rotate · pinch to zoom</div>
+</div>
+
+<div id="panel">
+  <div class="lbl">NODE SELECTED</div>
+  <div class="nm" id="pnm">—</div>
+  <div class="role" id="prole">—</div>
+  <div class="div"></div>
+  <div class="desc" id="pdesc">—</div>
+  <div class="sys" id="ps1"></div>
+  <div class="sys" id="ps2"></div>
+  <div class="div"></div>
+  <div class="th" id="pth">—</div>
+</div>
+
+<!-- PROTOTYPE PANEL -->
+<button id="proto-btn" onclick="document.getElementById('proto').classList.toggle('open')">
+  ⬡ Project Ethics Filter
+</button>
+<div id="proto">
+  <h3>▸ PROJECT PROTOTYPING — Ethics Filter</h3>
+  <div class="row">
+    <label>Project idea</label>
+    <textarea id="p-idea" placeholder="Describe your project or decision…"></textarea>
+  </div>
+  <div class="row">
+    <label>Scale</label>
+    <input id="p-scale" type="text" placeholder="e.g. local village / regional / national">
+  </div>
+  <div class="row">
+    <label>Resources</label>
+    <input id="p-res" type="text" placeholder="e.g. land, energy, people, money">
+  </div>
+  <div class="btns">
+    <button class="run" onclick="runFilter()">▸ Run 17-Foundation Check</button>
+    <button class="cls" onclick="document.getElementById('proto').classList.remove('open')">✕ Close</button>
+  </div>
+  <div id="proto-result"></div>
+</div>
+
+<div id="stats">
+  GRAND AXIOM &nbsp;<span>1</span><br>
+  FOUNDATIONS &nbsp;<span>17</span><br>
+  ARCHITECTS &nbsp;<span>12</span><br>
+  AI VALIDATORS &nbsp;<span>5</span><br>
+  COSMIC ORBIT &nbsp;<span>1</span><br>
+  REAL SYSTEMS &nbsp;<span>10</span>
+</div>
+
+<div id="leg">
+  <div class="li"><div class="ld" style="background:#ff00cc;box-shadow:0 0 8px #ff00cc"></div> Grand Axiom · Life</div>
+  <div class="li"><div class="ld" style="background:#ffd700;box-shadow:0 0 5px #ffd700"></div> 17 Foundations (ring)</div>
+  <div class="li"><div class="ld" style="background:#00ff44;box-shadow:0 0 7px #00ff44"></div> Architect + Real Solution</div>
+  <div class="li"><div class="ld" style="background:#223344;border:1px solid #446"></div> Architect — building</div>
+  <div class="li"><div class="ld" style="background:#ff6600;box-shadow:0 0 7px #ff6600"></div> AI Validator (Critic)</div>
+  <div class="li"><div class="ld" style="background:#aaddff;box-shadow:0 0 10px #aaddff"></div> Cosmic Scale (Thesis 16·17)</div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script>
+// ═══════════════════════════════════════════════════════
+// PROTOTYPING FILTER
+// ═══════════════════════════════════════════════════════
+const FILTER_CHECKS = [
+  {id:1, name:'Life Is Paramount',       q:(idea,scale,res)=> idea.length>10 ? 'ok' : 'warn'},
+  {id:2, name:'Balance Non-Negotiable',  q:(idea)=> /extract|exploit|mine|deplet/i.test(idea) ? 'warn' : 'ok'},
+  {id:3, name:'Species Humility',        q:(idea)=> /animal|species|ecosystem|nature/i.test(idea) ? 'ok' : 'warn'},
+  {id:4, name:'Create Not Deplete',      q:(idea,sc,res)=> /regenerat|renew|circular|restore/i.test(idea) ? 'ok' : /destroy|clear|dump/i.test(idea) ? 'fail' : 'warn'},
+  {id:5, name:'Energy of Light',         q:(idea)=> /solar|wind|hydro|renewable|clean energy/i.test(idea) ? 'ok' : 'warn'},
+  {id:6, name:'Preventive Protection',   q:(idea)=> /prevent|protect|safe|secure/i.test(idea) ? 'ok' : 'warn'},
+  {id:7, name:'Systems Thinking',        q:(idea,scale)=> scale.length>3 ? 'ok' : 'warn'},
+  {id:8, name:'Simplicity & Clarity',    q:(idea)=> idea.split(' ').length<80 ? 'ok' : 'warn'},
+  {id:9, name:'Honesty as Technology',   q:(idea)=> /transparent|open|public|honest/i.test(idea) ? 'ok' : 'warn'},
+  {id:10,name:'Responsibility',          q:(idea)=> /community|people|citizen|local/i.test(idea) ? 'ok' : 'warn'},
+  {id:11,name:'Unity Through Values',    q:(idea)=> /collab|partner|together|shared/i.test(idea) ? 'ok' : 'warn'},
+  {id:12,name:'Respect Diversity',       q:(idea)=> /diverse|inclusive|all|everyone/i.test(idea) ? 'ok' : 'warn'},
+  {id:13,name:'Everything Prototype',    q:(idea)=> /pilot|test|experiment|prototype|trial/i.test(idea) ? 'ok' : 'warn'},
+  {id:14,name:'Psychology Is Core',      q:(idea)=> /trust|wellbeing|mental|culture|human/i.test(idea) ? 'ok' : 'warn'},
+  {id:15,name:'Technology as Good',      q:(idea)=> /ai|digital|tech|tool|automat/i.test(idea) ? 'ok' : 'warn'},
+  {id:16,name:'Back Up Future',          q:(idea,sc,res)=> /backup|redundan|resilient|long.term/i.test(idea) ? 'ok' : 'warn'},
+  {id:17,name:'Light Not War',           q:(idea)=> /conflict|war|force|coerce/i.test(idea) ? 'fail' : 'ok'},
+];
+
+function runFilter(){
+  const idea=document.getElementById('p-idea').value;
+  const scale=document.getElementById('p-scale').value;
+  const res=document.getElementById('p-res').value;
+  const box=document.getElementById('proto-result');
+  if(!idea.trim()){box.style.display='block';box.innerHTML='<span class="warn">▸ Enter project description first</span>';return;}
+  let html='<div style="margin-bottom:6px;font-size:8px;letter-spacing:2px;color:rgba(0,212,255,0.4);">17-FOUNDATION SCAN RESULTS:</div>';
+  let ok=0,warn=0,fail=0;
+  FILTER_CHECKS.forEach(c=>{
+    const r=c.q(idea,scale,res);
+    const sym=r==='ok'?'✓':r==='warn'?'△':'✗';
+    const cls=r;
+    html+=`<span class="${cls}">${sym} T${c.id}: ${c.name}</span><br>`;
+    if(r==='ok')ok++; else if(r==='warn')warn++; else fail++;
+  });
+  html+=`<div style="margin-top:8px;padding-top:6px;border-top:1px solid rgba(0,212,255,0.1);">`;
+  html+=`<span class="ok">✓ ${ok} Clear</span> &nbsp; <span class="warn">△ ${warn} Review</span> &nbsp; <span class="fail">✗ ${fail} Blocked</span>`;
+  const score=Math.round((ok/17)*100);
+  const verdict=fail>0?'<span class="fail">BLOCKED — resolve conflicts first</span>':score>80?'<span class="ok">VIABLE — proceed to pilot</span>':'<span class="warn">REVIEW — address warnings before scaling</span>';
+  html+=`<div style="margin-top:6px;">Score: ${score}% — ${verdict}</div></div>`;
+  box.style.display='block'; box.innerHTML=html;
+}
+
+// ═══════════════════════════════════════════════════════
+// THREE.JS
+// ═══════════════════════════════════════════════════════
+const W=innerWidth,H=innerHeight;
+const scene=new THREE.Scene();
+scene.fog=new THREE.FogExp2(0x000510,0.025);
+const camera=new THREE.PerspectiveCamera(52,W/H,.1,300);
+camera.position.z=18;
+const renderer=new THREE.WebGLRenderer({antialias:true});
+renderer.setSize(W,H);renderer.setPixelRatio(Math.min(devicePixelRatio,2));
+renderer.setClearColor(0x000510,1);
+document.body.appendChild(renderer.domElement);
+
+scene.add(new THREE.AmbientLight(0x001830,3));
+const pl1=new THREE.PointLight(0x00d4ff,7,50);pl1.position.set(8,8,8);scene.add(pl1);
+const pl2=new THREE.PointLight(0xff00cc,5,35);pl2.position.set(-6,-5,-5);scene.add(pl2);
+const pl3=new THREE.PointLight(0xff6600,3,25);pl3.position.set(0,6,6);scene.add(pl3);
+const pl4=new THREE.PointLight(0xaaddff,2,20);pl4.position.set(0,-8,0);scene.add(pl4);
+
+const G=new THREE.Group();scene.add(G);
+
+// ── HELPERS ────────────────────────────────────────────
+function sph(r,col,emI=0.65,op=0.93){
+  return new THREE.Mesh(new THREE.SphereGeometry(r,32,32),
+    new THREE.MeshPhongMaterial({color:col,emissive:col,emissiveIntensity:emI,transparent:true,opacity:op}));
+}
+function wire(r,col,op=0.12){
+  return new THREE.Mesh(new THREE.SphereGeometry(r*1.5,12,12),
+    new THREE.MeshBasicMaterial({color:col,transparent:true,opacity:op,wireframe:true,depthWrite:false}));
+}
+function tub(pa,pb,col,op=0.65,rad=0.04){
+  const mid=new THREE.Vector3((pa.x+pb.x)/2+(Math.random()-.5)*.7,(pa.y+pb.y)/2+(Math.random()-.5)*.7,(pa.z+pb.z)/2+(Math.random()-.5)*.7);
+  return new THREE.Mesh(new THREE.TubeGeometry(new THREE.CatmullRomCurve3([pa,mid,pb]),20,rad,6,false),
+    new THREE.MeshBasicMaterial({color:col,transparent:true,opacity:op,depthWrite:false}));
+}
+function lbl(txt,col='#fff',sz=24,w=512,h=180){
+  const c=document.createElement('canvas');c.width=w;c.height=h;
+  const ctx=c.getContext('2d');ctx.clearRect(0,0,w,h);
+  ctx.font=`bold ${sz}px 'Share Tech Mono',monospace`;
+  ctx.fillStyle=col;ctx.textAlign='center';
+  txt.split('\n').forEach((l,i)=>ctx.fillText(l,w/2,52+i*46));
+  const sp=new THREE.Sprite(new THREE.SpriteMaterial({map:new THREE.CanvasTexture(c),transparent:true,depthWrite:false}));
+  sp.scale.set(3.2,1.4,1);return sp;
+}
+function ring(r,col,op=0.3){
+  return new THREE.Mesh(new THREE.TorusGeometry(r,.02,8,120),
+    new THREE.MeshBasicMaterial({color:col,transparent:true,opacity:op}));
+}
+
+// ═══════════════════════════════════════════════════════
+// 1. GRAND AXIOM — core
+// ═══════════════════════════════════════════════════════
+const core=sph(1.4,0xff00cc,0.9);
+core.userData={label:'GRAND AXIOM',role:'Life as the Immutable Constant',
+  desc:'Life is the immutable constant. Not humanity — Life. All 17 Foundations are operational rules derived from this single axiom. The axiom is inviolable — it can only be violated, never changed.',
+  s1:'17 Foundations = boundaries of the permissible',s2:'Anthosphere = civilizational flourishing',
+  th:'T1: Life Is Paramount — the origin of everything',roleColor:'#ff88dd'};
+G.add(core);
+
+const cShell=wire(1.4,0xff00cc,0.12);G.add(cShell);
+const cShell2=wire(1.4,0xff00cc,0.05);cShell2.children; // extra outer
+const cRing=ring(2.2,0xff00cc,0.2);G.add(cRing);
+
+const cLbl=lbl('GRAND AXIOM\nLIFE · ANTHOSPHERE','#ff88dd',24);
+cLbl.position.set(0,2.6,0);G.add(cLbl);
+const cSub=lbl('Central Objective\nAll orbits derive from here','rgba(255,100,220,0.4)',16);
+cSub.position.set(0,-2.3,0);cSub.scale.set(3.0,1.0,1);G.add(cSub);
+
+// ═══════════════════════════════════════════════════════
+// 2. 17 FOUNDATIONS — orbit ring
+// ═══════════════════════════════════════════════════════
+const FOUND17=['Life Is Paramount','Balance Non-Negotiable','Species Humility','Create Not Deplete','Energy of Light','Preventive Protection','Systems Thinking','Simplicity & Clarity','Honesty as Tech','Responsibility','Unity Through Values','Respect Diversity','Everything Prototype','Psychology is Core','Technology as Good','Back Up Future','Light Not War'];
+
+const FR=4.5,FTILT=0.38;
+const fMeshes=[];
+const tor=ring(FR,0xffd700,0.28);tor.rotation.x=FTILT;G.add(tor);
+
+// Orbit label
+const fOrbitLbl=lbl('17 FOUNDATIONS\nOperational boundaries of the permissible','rgba(255,215,0,0.3)',14);
+fOrbitLbl.position.set(FR+1.5,0.5,0);fOrbitLbl.scale.set(3.5,0.9,1);G.add(fOrbitLbl);
+
+FOUND17.forEach((name,i)=>{
+  const a=(i/17)*Math.PI*2;
+  const x=FR*Math.cos(a),y=FR*Math.sin(a)*Math.sin(FTILT),z=FR*Math.sin(a)*Math.cos(FTILT)-FR*0.2;
+  const f=sph(0.3,0xffd700,0.78,0.93);
+  f.position.set(x,y,z);
+  f.userData={label:`THESIS ${i+1}`,role:name,
+    desc:`Foundation ${i+1} of 17. An operational boundary — not a goal. The system cannot cross this line. Derived from the Grand Axiom.`,
+    s1:null,s2:null,th:'Part of the protective ring around the Core',roleColor:'#ffd700'};
+  G.add(f);fMeshes.push(f);
+  G.add(tub(new THREE.Vector3(0,0,0),f.position.clone(),0xffd700,0.22,0.012));
+  // Label every foundation
+  const fl=lbl(`T${i+1}`,i%3===0?'#ffd700':'rgba(255,215,0,0.5)',i%3===0?18:14);
+  fl.position.copy(f.position);fl.position.y+=0.62;fl.scale.set(1.4,0.55,1);G.add(fl);
+});
+
+// ═══════════════════════════════════════════════════════
+// 3. 12 ARCHITECTS
+// ═══════════════════════════════════════════════════════
+const ARCH12=[
+  {n:'Systems\nArchitect I', role:'Integrity of the whole',real:true,desc:'Sees how all parts connect. Holds the system coherent against chaos.',s1:'Grand Axiom framework',s2:'17 Foundations as OS',th:'T7 Systems Thinking · T8 Simplicity'},
+  {n:'Systems\nArchitect II',role:'Local pilot lead',real:false,desc:'Translates vision into local experiments. First 100-500 people.',s1:null,s2:null,th:'T13 Everything Prototype · T6 Prevention'},
+  {n:'AI/Tech\nArchitect I', role:'Multi-contour AI builder',real:true,desc:'Builds AI critics that verify decisions against 17 Foundations before they execute.',s1:'X-Road Estonia — 2.7B queries 2024',s2:'Pol.is Taiwan — 26M citizens in legislation',th:'T15 Technology as Good · T9 Honesty'},
+  {n:'AI/Tech\nArchitect II',role:'Systems engineering',real:true,desc:'RAG pipelines, simulation models, decision APIs. Makes the AI critics technically real.',s1:'vTaiwan digital legislation',s2:null,th:'T15 · T8 Simplicity & Clarity'},
+  {n:'Ecologist /\nBiologist', role:'Biosphere filter',real:true,desc:'Every decision passes ecological review first. Carbon, water, species cycles cannot be overridden.',s1:'Savory Institute — 30M+ acres regenerated',s2:'Costa Rica — forest 21%→57% in 30 years',th:'T2 Balance · T3 Species Humility · T4 Create'},
+  {n:'Psychologist /\nSociologist',role:'Culture & trust architect',real:true,desc:'Group dynamics, trauma healing, cultural anthropology. Without trust the system cannot hold.',s1:'Peace Huts Liberia — war ended 2 weeks',s2:'Kerala social cohesion model',th:'T14 Psychology · T10 Responsibility · T11 Unity'},
+  {n:'Economist /\nPlanner',  role:'Resource mathematics',real:true,desc:'Circular economics. Distribution without depletion. Budget balance over generations.',s1:'Mondragon — 1:6 ratio, 60yrs no bankrupt',s2:'Norway Fund — $2.1T ethical wealth',th:'T4 Create · T5 Energy of Light · T7 Systems'},
+  {n:'Engineer /\nBuilder I', role:'Physical infrastructure',real:true,desc:'Builds real things: energy, construction, water. Theory without infrastructure stays philosophy.',s1:'Norway EV — 88.9% new cars electric 2024',s2:'Kriminalomsorgen — 20% recidivism',th:'T5 Energy · T16 Back Up · T4'},
+  {n:'Engineer /\nBuilder II',role:'Backup & resilience',real:false,desc:'Redundancy. No single point of failure. Everything has a backup. Thesis 16 in practice.',s1:null,s2:null,th:'T16 Back Up Future · T13 Prototype'},
+  {n:'Legal /\nRegulatory',  role:'Legal framework creator',real:true,desc:'Creates legal shells for experiments. Navigates existing law. Gives the system legal personhood.',s1:'Costa Rica — no army since 1948',s2:'NZ — river legal personhood 2017',th:'T10 Responsibility · T11 Unity Through Values'},
+  {n:'Communicator /\nTranslator',role:'Complexity → simplicity',real:true,desc:'Translates system language to human language. Without this — the system cannot spread.',s1:'e-Estonia — 60+ countries trained',s2:'Transition Towns — 1500 cities 50 countries',th:'T8 Simplicity · T9 Honesty · T17 Light'},
+  {n:'Healthcare /\nPublic Health',role:'Health as foundational baseline',real:true,desc:'Medicine, prevention, epidemiology. Health is the precondition. Without it everything else fails.',s1:'Kerala — 77yr life at Salvador GDP',s2:null,th:'T1 Life · T6 Prevention · T14 Psychology'},
+];
+
+const AR=8.2;const aMeshes=[];
+// Orbit label
+const aOrbitLbl=lbl('12 ARCHITECTS\nHuman nodes of the Coalition','rgba(0,255,68,0.25)',13);
+aOrbitLbl.position.set(-AR-1,1,0);aOrbitLbl.scale.set(3.2,0.85,1);G.add(aOrbitLbl);
+
+ARCH12.forEach((a,i)=>{
+  const phi=Math.acos(1-2*(i+.5)/12);
+  const theta=Math.PI*(1+Math.sqrt(5))*(i+.5);
+  const x=AR*Math.sin(phi)*Math.cos(theta),y=AR*Math.sin(phi)*Math.sin(theta),z=AR*Math.cos(phi);
+  const pos=new THREE.Vector3(x,y,z);
+  const col=a.real?0x00ff44:0x223344,size=a.real?.72:.38,emI=a.real?.78:.22;
+  const s=sph(size,col,emI,a.real?.95:.7);
+  s.position.copy(pos);
+  s.userData={label:a.n.replace('\n',' '),role:a.role,desc:a.desc,s1:a.s1,s2:a.s2,th:a.th,roleColor:a.real?'#00ff44':'#446677'};
+  G.add(s);aMeshes.push(s);
+  if(a.real){
+    const sh=wire(size,0x00ff44,0.18);s.add(sh);
+    const inner=sph(size*.3,0x00ff44,1.0,1.0);s.add(inner);
+    const gr=new THREE.Mesh(new THREE.TorusGeometry(size*1.4,.014,6,32),new THREE.MeshBasicMaterial({color:0x00ff44,transparent:true,opacity:0.5}));s.add(gr);
+  } else {
+    const sh=wire(size,0x334455,0.25);s.add(sh);
+  }
+  const lc=a.real?'#00ff44':'rgba(70,100,120,0.7)';
+  const al=lbl(a.n,lc,a.real?22:16);
+  al.position.copy(pos);al.position.y+=size+0.85;al.scale.set(a.real?3.0:2.0,a.real?1.0:.75,1);G.add(al);
+  G.add(tub(new THREE.Vector3(0,0,0),pos,a.real?0x00ff44:0x223344,a.real?.55:.13,a.real?.04:.018));
+  fMeshes.map((f,fi)=>({fi,d:pos.distanceTo(f.position)})).sort((a,b)=>a.d-b.d).slice(0,2)
+    .forEach(({fi})=>G.add(tub(pos.clone(),fMeshes[fi].position.clone(),0xffd700,0.28,.013)));
+});
+// Cross-connect real architects
+const realA=aMeshes.filter((_,i)=>ARCH12[i].real);
+for(let i=0;i<realA.length;i++)for(let j=i+1;j<realA.length;j++)
+  if(realA[i].position.distanceTo(realA[j].position)<7)
+    G.add(tub(realA[i].position.clone(),realA[j].position.clone(),0x00ff44,.32,.02));
+
+// ═══════════════════════════════════════════════════════
+// 4. AI VALIDATORS — orange mid-orbit
+// ═══════════════════════════════════════════════════════
+const AV=[
+  {n:'GOVERNANCE\nValidator',role:'AI Critic: Digital & Democratic systems',col:0xff6600,
+   desc:'Verifies transparency, participation, anti-corruption. Connects governance solutions across countries.',
+   s1:'Links: Estonia ↔ Taiwan ↔ New Zealand',s2:'Pattern: Trust through transparency',th:'T9 Honesty · T8 Simplicity · T7 Systems'},
+  {n:'ECONOMICS\nValidator',role:'AI Critic: Ownership & Welfare',col:0xff6600,
+   desc:'Reviews distribution, ownership structures, welfare outcomes. Flags when inequality violates T4.',
+   s1:'Links: Mondragon ↔ Kerala ↔ Norway Fund',s2:'Pattern: Dignity as economic output',th:'T4 Create · T5 Energy · T10 Responsibility'},
+  {n:'ECOLOGY\nValidator',role:'AI Critic: Land · Energy · Policy',col:0xff6600,
+   desc:'Reviews ecosystem impact. Carbon, species, water cycles. Cannot be overridden by economics.',
+   s1:'Links: Savory ↔ Costa Rica ↔ Norway EV',s2:'Pattern: Nature as infrastructure',th:'T2 Balance · T3 Humility · T4 Create'},
+  {n:'JUSTICE\nValidator',role:'AI Critic: Rehabilitation & Resolution',col:0xff6600,
+   desc:'Reviews justice approaches. Trauma-informed, preventive, restorative over punitive.',
+   s1:'Links: Norway prisons ↔ Peace Huts ↔ Kerala',s2:'Pattern: Prevention over punishment',th:'T6 Prevention · T10 Responsibility · T14 Psychology'},
+  {n:'META\nValidator',role:'AI Critic: Cross-system patterns',col:0xff8800,
+   desc:'Sees patterns across ALL validators. This is the moment of the map — when all nodes realize they are already one network.',
+   s1:'Connects all validators ↔ Grand Axiom',s2:'Pattern: Emergence from connection',th:'All 17 Foundations simultaneously'},
+];
+
+const VR=6.2;const vMeshes=[];
+const vOrbitLbl=lbl('5 AI VALIDATORS\nMulti-contour critics','rgba(255,102,0,0.3)',13);
+vOrbitLbl.position.set(0,VR+1,0);vOrbitLbl.scale.set(3.0,.8,1);G.add(vOrbitLbl);
+
+AV.forEach((v,i)=>{
+  const a=(i/5)*Math.PI*2+.3;
+  const x=VR*Math.cos(a),y=VR*Math.sin(a)*.4,z=VR*Math.sin(a)*.8;
+  const pos=new THREE.Vector3(x,y,z);
+  const s=sph(.6,v.col,.88,.95);s.position.copy(pos);
+  s.userData={label:v.n.replace('\n',' '),role:v.role,desc:v.desc,s1:v.s1,s2:v.s2,th:v.th,roleColor:'#ff7700'};
+  G.add(s);vMeshes.push(s);
+  const sh=wire(.6,v.col,.2);s.add(sh);
+  s.add(sph(.2,0xffaa00,1.0,1.0));
+  s.add(new THREE.Mesh(new THREE.TorusGeometry(.6*1.4,.014,6,32),new THREE.MeshBasicMaterial({color:v.col,transparent:true,opacity:.55})));
+  const vl=lbl(v.n,'#ff8800',20);vl.position.copy(pos);vl.position.y+=1.1;vl.scale.set(2.7,.95,1);G.add(vl);
+  G.add(tub(new THREE.Vector3(0,0,0),pos,v.col,.7,.05));
+  realA.map((ra,ri)=>({ri,d:pos.distanceTo(ra.position)})).sort((a,b)=>a.d-b.d).slice(0,2)
+    .forEach(({ri})=>G.add(tub(pos.clone(),realA[ri].position.clone(),0xff8800,.5,.03)));
+  fMeshes.map((f,fi)=>({fi,d:pos.distanceTo(f.position)})).sort((a,b)=>a.d-b.d).slice(0,3)
+    .forEach(({fi})=>G.add(tub(pos.clone(),fMeshes[fi].position.clone(),0xff9900,.38,.016)));
+});
+for(let i=0;i<vMeshes.length;i++){
+  const j=(i+1)%vMeshes.length;
+  G.add(tub(vMeshes[i].position.clone(),vMeshes[j].position.clone(),0xff6600,.48,.024));
+}
+
+// ═══════════════════════════════════════════════════════
+// 5. COSMIC SCALE — far orbit (Thesis 16 + 17)
+// ═══════════════════════════════════════════════════════
+const cosmic=sph(0.9,0xaaddff,0.85,0.9);
+cosmic.position.set(0,12,0);
+cosmic.userData={label:'COSMIC SCALE',role:'Thesis 16: Back Up Future · Thesis 17: Light Not War',
+  desc:'Cosmic scalability — the final horizon of the Anthosphere. Life not only survives on Earth but expands into the Universe. Seed vaults on Mars. Civilizational backup. The 17 Foundations scale to interplanetary civilization.',
+  s1:'T16: Interplanetary backup of Life',s2:'T17: Light expands — war contracts',
+  th:'Cosmic Scalability — the final objective of the system',roleColor:'#aaddff'};
+G.add(cosmic);
+
+const cWire=wire(0.9,0xaaddff,0.15);cosmic.add(cWire);
+cosmic.add(sph(.3,0xffffff,1.0,1.0));
+cosmic.add(new THREE.Mesh(new THREE.TorusGeometry(0.9*1.4,.014,6,32),new THREE.MeshBasicMaterial({color:0xaaddff,transparent:true,opacity:.45})));
+// Second tilted ring
+const cr2=new THREE.Mesh(new THREE.TorusGeometry(0.9*2,.01,6,32),new THREE.MeshBasicMaterial({color:0xaaddff,transparent:true,opacity:.25}));
+cr2.rotation.x=Math.PI/3;cosmic.add(cr2);
+
+const cosmicLbl=lbl('COSMIC SCALE\nT16 Back Up · T17 Light\nInterplanetary Civilization','#aaddff',20);
+cosmicLbl.position.set(0,14.2,0);cosmicLbl.scale.set(3.5,1.4,1);G.add(cosmicLbl);
+
+// Beam from core to cosmic
+G.add(tub(new THREE.Vector3(0,0,0),cosmic.position.clone(),0xaaddff,.4,.03));
+// Connect cosmic to some foundations (T16, T17)
+[15,16].forEach(fi=>G.add(tub(cosmic.position.clone(),fMeshes[fi].position.clone(),0xaaddff,.35,.015)));
+
+// Far orbit ring
+const cosmicRing=ring(12,0xaaddff,0.1);cosmicRing.rotation.x=.3;G.add(cosmicRing);
+
+// ═══════════════════════════════════════════════════════
+// PARTICLES
+// ═══════════════════════════════════════════════════════
+const pGeo=new THREE.BufferGeometry();
+const pPos=new Float32Array(800*3);
+for(let i=0;i<800*3;i++) pPos[i]=(Math.random()-.5)*60;
+pGeo.setAttribute('position',new THREE.BufferAttribute(pPos,3));
+scene.add(new THREE.Points(pGeo,new THREE.PointsMaterial({color:0x00d4ff,size:.05,transparent:true,opacity:.2})));
+
+// ═══════════════════════════════════════════════════════
+// INTERACTION
+// ═══════════════════════════════════════════════════════
+const ray=new THREE.Raycaster();
+const panel=document.getElementById('panel');
+
+function show(ud){
+  document.getElementById('pnm').textContent=ud.label||'—';
+  const r=document.getElementById('prole');r.textContent=ud.role||'';r.style.color=ud.roleColor||'#aaa';
+  document.getElementById('pdesc').textContent=ud.desc||'';
+  const s1=document.getElementById('ps1'),s2=document.getElementById('ps2');
+  if(ud.s1){s1.textContent='▸ '+ud.s1;s1.style.display='block';s1.style.borderColor=ud.roleColor||'#00ff44';s1.style.color=ud.roleColor||'#00ff44';}else s1.style.display='none';
+  if(ud.s2){s2.textContent='▸ '+ud.s2;s2.style.display='block';s2.style.borderColor=ud.roleColor||'#00ff44';s2.style.color=ud.roleColor||'#00ff44';}else s2.style.display='none';
+  document.getElementById('pth').textContent=ud.th||'';
+  panel.classList.add('on');
+}
+
+let drag=false,prev={x:0,y:0},rX=0,rY=0,tX=0,tY=0,zoom=18,tzoom=18,tc=null,ptd=0;
+renderer.domElement.addEventListener('mousedown',e=>{drag=false;prev={x:e.clientX,y:e.clientY};});
+renderer.domElement.addEventListener('mousemove',e=>{if(e.buttons===1){drag=true;tY+=(e.clientX-prev.x)*.007;tX+=(e.clientY-prev.y)*.007;prev={x:e.clientX,y:e.clientY};}});
+renderer.domElement.addEventListener('click',e=>{
+  if(drag)return;
+  const m=new THREE.Vector2((e.clientX/W)*2-1,-(e.clientY/H)*2+1);
+  ray.setFromCamera(m,camera);
+  const h=ray.intersectObjects(G.children,true).find(h=>h.object.userData&&h.object.userData.label);
+  if(h)show(h.object.userData);else panel.classList.remove('on');
+});
+renderer.domElement.addEventListener('wheel',e=>{tzoom=Math.max(8,Math.min(28,tzoom+e.deltaY*.025));});
+renderer.domElement.addEventListener('touchstart',e=>{if(e.touches.length===1){tc={x:e.touches[0].clientX,y:e.touches[0].clientY};drag=false;}if(e.touches.length===2)ptd=Math.hypot(e.touches[0].clientX-e.touches[1].clientX,e.touches[0].clientY-e.touches[1].clientY);},{passive:true});
+renderer.domElement.addEventListener('touchmove',e=>{e.preventDefault();if(e.touches.length===1&&tc){drag=true;tY+=(e.touches[0].clientX-tc.x)*.007;tX+=(e.touches[0].clientY-tc.y)*.007;tc={x:e.touches[0].clientX,y:e.touches[0].clientY};}if(e.touches.length===2){const d=Math.hypot(e.touches[0].clientX-e.touches[1].clientX,e.touches[0].clientY-e.touches[1].clientY);tzoom=Math.max(8,Math.min(28,tzoom-(d-ptd)*.05));ptd=d;}},{passive:false});
+renderer.domElement.addEventListener('touchend',e=>{if(!drag&&tc){const m=new THREE.Vector2((tc.x/W)*2-1,-(tc.y/H)*2+1);ray.setFromCamera(m,camera);const h=ray.intersectObjects(G.children,true).find(h=>h.object.userData&&h.object.userData.label);if(h)show(h.object.userData);else panel.classList.remove('on');}tc=null;});
+window.addEventListener('resize',()=>{camera.aspect=innerWidth/innerHeight;camera.updateProjectionMatrix();renderer.setSize(innerWidth,innerHeight);});
+
+// ═══════════════════════════════════════════════════════
+// ANIMATE
+// ═══════════════════════════════════════════════════════
+let t=0;
+function animate(){
+  requestAnimationFrame(animate);t+=.004;
+  tY+=.0018;
+  rX+=(tX-rX)*.05;rY+=(tY-rY)*.05;zoom+=(tzoom-zoom)*.05;
+  G.rotation.x=rX;G.rotation.y=rY;camera.position.z=zoom;
+
+  core.scale.setScalar(1+Math.sin(t*2.5)*.09);
+  core.material.emissiveIntensity=.7+Math.sin(t*3)*.25;
+  cShell.rotation.y=t*.22;cShell.rotation.z=t*.1;
+  cRing.rotation.z=t*.05;cRing.material.opacity=.15+Math.sin(t)*.08;
+
+  tor.rotation.y=t*.05;
+  fMeshes.forEach((f,i)=>{f.material.emissiveIntensity=.55+Math.sin(t*2+i*.38)*.32;f.scale.setScalar(1+Math.sin(t*3+i)*.07);});
+
+  aMeshes.forEach((a,i)=>{a.material.emissiveIntensity=(ARCH12[i].real?.72:.18)+Math.sin(t*2+i*.65)*.2;});
+
+  vMeshes.forEach((v,i)=>{v.material.emissiveIntensity=.78+Math.sin(t*2.5+i*.8)*.22;v.scale.setScalar(1+Math.sin(t*2+i*.6)*.06);});
+
+  // Cosmic slow orbit
+  const ca=t*.07;
+  cosmic.position.x=Math.sin(ca)*2;
+  cosmic.position.z=Math.cos(ca)*2;
+  cosmic.material.emissiveIntensity=.7+Math.sin(t*1.5)*.3;
+  cWire.rotation.y=t*.2;cWire.rotation.x=t*.15;
+  cr2.rotation.z=t*.1;
+
+  pl1.intensity=6+Math.sin(t)*2;
+  pl2.intensity=4+Math.cos(t*1.3)*1.5;
+  pl4.intensity=1.5+Math.sin(t*1.7)*.8;
+
+  renderer.render(scene,camera);
+}
+
+// BOOT SEQUENCE
+const seq=['LOADING GRAND AXIOM...','INITIALIZING 17 FOUNDATIONS...','CONNECTING 12 ARCHITECTS...','ACTIVATING AI VALIDATORS...','PROJECTING COSMIC SCALE...','SYSTEM ONLINE'];
+let si=0;
+const bseq=document.getElementById('bseq');
+const bint=setInterval(()=>{if(si<seq.length){bseq.textContent=seq[si++];}else clearInterval(bint);},320);
+setTimeout(()=>document.getElementById('bprog').style.width='100%',100);
+setTimeout(()=>{document.getElementById('boot').classList.add('gone');animate();},2200);
+</script>
+</body>
+</html>

@@ -1,0 +1,57 @@
+{
+  "@context": "https://schema.org",
+  "@type": "Book",
+  "name": "Architect of Reality",
+  "subtitle": "An Operating System for a Civilization That Survives",
+  "author": {
+    "@type": "Person",
+    "name": "Anton Parf",
+    "url": "https://anthosphere.com"
+  },
+  "license": "https://creativecommons.org/licenses/by/4.0/",
+  "inLanguage": "en",
+  "about": "Civilizational systems design, AI alignment, life-as-negentropy axiom",
+  "keywords": [
+    "civilization", "systems thinking", "AI alignment", "life as value",
+    "negentropy", "anthosphere", "17 foundations", "grand axiom",
+    "Goodhart's law", "existential risk", "Ukraine", "philosophy"
+  ],
+  "concepts": {
+    "grand_axiom": {
+      "statement": "Life is the irreducible value of any sustainable system",
+      "formalization": "Life as the only known irreversible negentropy process in the Universe",
+      "implication": "Any system — biological or artificial — that reduces life's complexity is misaligned by definition"
+    },
+    "anthosphere": {
+      "etymology": "Greek anthos (flowering) + sphaira (sphere)",
+      "definition": "The sphere of flourishing — stage after Noosphere where intelligence serves life at all scales",
+      "motto": "Anthosphere — those who build and do not forget"
+    },
+    "17_foundations": [
+      "Life Is the Paramount Value",
+      "Balance",
+      "Species Humility",
+      "Create, Don't Deplete",
+      "The Energy of Light",
+      "Preventive Protection",
+      "Systems Thinking",
+      "Simplicity and Clarity",
+      "Honesty as Technology",
+      "Responsibility",
+      "Unity",
+      "Diversity",
+      "Everything Is a Prototype",
+      "Psychology",
+      "Technology",
+      "Backing Up the Future",
+      "Light Instead of War"
+    ],
+    "ai_alignment_argument": {
+      "core": "Life-as-negentropy as a mathematically grounded alignment axiom transcending cultural relativism",
+      "goodhart_connection": "Civilizational systems are misaligned optimizers — a direct application of Goodhart's Law at scale",
+      "cosmic_argument": "Biological life as cosmic failsafe — a backup-systemic argument for why intelligence should protect life"
+    }
+  },
+  "repository": "https://github.com/antonparf/architect-of-reality",
+  "website": "https://anthosphere.com"
+}
