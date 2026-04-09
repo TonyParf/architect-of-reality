@@ -171,7 +171,7 @@ From the Anthosphere framework: *"We are the points where the universe thinks ab
 ## Citation
 
 ```
-Parf, A. (2024). Life as Negentropy: Mathematical Formalization of the Grand Axiom.
+Parf, A. (2026). Life as Negentropy: Mathematical Formalization of the Grand Axiom.
 Anthosphere Project. https://github.com/TonyParf/architect-of-reality
 CC BY 4.0
 ```
